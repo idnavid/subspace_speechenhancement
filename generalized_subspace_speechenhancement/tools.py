@@ -53,6 +53,49 @@ def zero_mean(xframes):
     frame_means = np.tile(frame_means,(frame_size,1))
     return xframes - frame_means.T
 
+def covariance(xframes):
+    '''
+        Compute covariance matrix of data. 
+        '''
+    xframes = zero_mean(xframes)
+    nframes = xframes.shape[0]
+    frame_size = xframes.shape[1]
+    x = xframes[0,:]
+    print(x.shape)
+    outer_product = np.outer(x.T,x)
+    print(outer_product.shape)
+    for i in range(1,nframes):
+        outer_product += np.outer(xframes[i,:].T,xframes[i,:])
+    return outer_product/float(frame_size)
+
+def lag_covariance(xframes,l_0):
+    '''
+        To be used in auto_covariance  
+        l0 is the between frame lag used to calculate covariances. 
+        '''
+    y = zero_mean(xframes)
+    T = y.shape[0] # number of frames
+    N = y.shape[1] # frame dimension
+    x1 = y[0,:]
+    x2 = y[l_0,:]
+    outer_product = np.outer(x1.T,x2)
+    print(outer_product.shape)
+    for i in range(1,T-l_0):
+        outer_product += np.outer(xframes[i,:].T,xframes[i+l_0,:])
+    return outer_product/float(T-l_0)
+
+def auto_covariance(xframes):
+    '''
+        Based on the definition provided in Estimating Effective 
+        Connectivity from fMRI Data Using Factor-based Subspace 
+        Autoregressive Models, 2015. 
+        This is especially useful with small number of frames.  
+        '''
+    Sigma_auto = lag_covariance(xframes,1)
+    for lag in range(2,100):
+        Sigma_auto += lag_covariance(xframes,lag)
+    return Sigma_auto
+
 def enframe(x, winlen, hoplen):
     """
         receives a 1D numpy array and divides it into frames.
