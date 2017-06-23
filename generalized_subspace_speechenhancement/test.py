@@ -8,7 +8,7 @@ if __name__=='__main__':
     
     # Ground truth
     fs,s = read_wav(test_wav)
-    sframes = enframe(s,win*fs,inc*fs)
+    sframes = enframe(s,int(win*fs),int(inc*fs))
     ## Voice activity threshold has been arbitrarily set:
     voice_labels = np.diagonal(np.dot(sframes,sframes.T)) > 4.0
     S = power_spectrum(sframes)
@@ -38,4 +38,4 @@ if __name__=='__main__':
         ls_err.append(np.mean(itakura_saito_dist(Xls,S)))
     
     plot_these(ls_err,els_err)
-    print "Done!"
+    print("Done!")

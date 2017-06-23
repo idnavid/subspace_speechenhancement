@@ -44,25 +44,38 @@ def read_wav(filename):
     s = add_wgn(s) # Add jitter for numerical stability
     return fs,s
 
+def zero_mean(xframes):
+    '''
+        removes mean from each frame. Assumes columns correspond to frames.
+        '''
+    frame_size = xframes.shape[1]
+    frame_means = np.mean(xframes,axis=1)
+    frame_means = np.tile(frame_means,(frame_size,1))
+    return xframes - frame_means.T
+
 def enframe(x, winlen, hoplen):
     """
         receives a 1D numpy array and divides it into frames.
         outputs a numpy matrix with the frames in rows.
         """
     x = np.squeeze(x)
+    winlen = int(winlen)
+    hoplen = int(hoplen)
     if x.ndim != 1:
         raise TypeError("enframe input must be a 1-dimensional array.")
     n_frames = 1 + np.int(np.floor((len(x) - winlen) / float(hoplen)))
     xf = np.zeros((n_frames, winlen))
     for ii in range(n_frames):
-        #xf[ii] = np.multiply(x[ii * hoplen : ii * hoplen + winlen],np.hamming(winlen))
-        xf[ii] = x[ii * hoplen : ii * hoplen + winlen]
+        xf[ii] = np.multiply(x[ii * hoplen : ii * hoplen + winlen],np.hamming(winlen))
+        #xf[ii] = x[ii * hoplen : ii * hoplen + winlen]
     return xf
 
 def deframe(x_frames, winlen, hoplen):
     '''
         Implementation of Overlap-add to reconstruct signal from frames.
         '''
+    winlen = int(winlen)
+    hoplen = int(hoplen)
     n_frames = x_frames.shape[0]
     n_samples = n_frames*hoplen + winlen
     x_samples = np.zeros((n_samples,1))
@@ -133,7 +146,7 @@ def power_spectrum(x):
         x: input signal, each row is one frame
         """
     X = np.fft.fft(x,axis=1)
-    X = np.abs(X[:,:X.shape[1]/2])**2
+    X = np.abs(X[:,:int(X.shape[1]/2)])**2
     return np.sqrt(X)
 
 
